@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 
@@ -15,25 +16,15 @@
 =========================================================*/
 typedef struct coder CODER;
 typedef struct dongle DONGLE;
-typedef struct scheduler SCHEDULER;
 typedef struct monitor MONITOR;
+typedef struct s_simulation SIMULATION;
 
-/*=========================================================
-   Enumerations
-=========================================================*/
-typedef enum state
+typedef struct s_simulation
 {
-   READY,
-   RUNNING,
-   WAITING,
-   BLOCKED
-} STATE;
+   int start_time;
+} SIMULATION;
 
-// typedef enum neighbour
-// {
-//    LEFT,
-//    RIGHT
-// } NEIGHBOUR;
+
 
 /*=========================================================
    DONGLE
@@ -43,11 +34,12 @@ typedef struct dongle
     int id;
     int cool_down;
     int is_used;
+    char *policy;
+    struct timespec cooldown_until;
 
-   pthread_mutex_t mutex;
+    pthread_mutex_t dongle_mutex;
 
-    /* Which coder is currently using this dongle? */
-    CODER *dongle_used_by;
+    CODER *ready_coder[2];
 } DONGLE;
 
 
@@ -64,47 +56,46 @@ typedef struct coder
    int time_to_debug;
    int time_to_refac;
    int nub_of_compiles;
+   int start;
+   int last_compile;
+   int time_until_burnout;
+   SIMULATION *simulation;
 
-   /* Pointer to the dongle currently assigned */
-   // DONGLE *left_dongle;
-   // DONGLE *right_dongle;
-   DONGLE *own_dongle;
    DONGLE *left;
    DONGLE *right;
 
-   /* Current state of the coder */
-   STATE state;
-
-
-   /* Optional thread for this coder */
    pthread_t thread;
+   pthread_cond_t coder_cond;
 } CODER;
 
-
-
-/*=========================================================
-   SCHEDULER
-=========================================================*/
-typedef struct scheduler
-{
-   CODER **queue;
-   char *policy;
-} SCHEDULER;
 
 /*=========================================================
    MONITOR
 =========================================================*/
-struct monitor
+typedef struct monitor
 {
    /* Add monitoring variables later */
-};
+   int time_to_burnout;
+   int burnout_detected;
+   CODER *coder;
 
+   pthread_t monitor_thread;
+   pthread_mutex_t monitor_mutex;
+   pthread_cond_t monitor_cond;
+} MONITOR;
 
 /*=========================================================
    Function Prototypes
 =========================================================*/
-void initialisation(int *data, char *policy, int size);
-
+void initialisation_and_creating_threads(int *data, char *policy);
+void coder_and_monitor_thread_creation(CODER *coder, int size, MONITOR *montor);
+int convert_to_milisecond();
+int convert_to_microsecond(int nb);
+void request_dongles(CODER *coder);
+void fifo_implementation(DONGLE *dongle, CODER *coder);
+void edf_implementation(DONGLE *dongle, CODER *coder);
+void release_dongles(CODER *coder);
+void debuging_and_refactoring(CODER *coder);
 
 #endif
 

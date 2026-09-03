@@ -17,15 +17,21 @@ static void release_one_dongle(DONGLE *dongle)
     clock_gettime(CLOCK_MONOTONIC, &now);
 
     dongle->cooldown_until = now;
-    dongle->cooldown_until.tv_sec += dongle->cool_down / 1000;
 
-    /*
-     * Remove the current coder from the ready queue.
-     *
-     * The coder that was [1] becomes [0].
-     */
-    dongle->ready_coder[0] = dongle->ready_coder[1];
-    dongle->ready_coder[1] = NULL;
+    dongle->cooldown_until.tv_sec +=
+        dongle->cool_down / 1000;
+
+    dongle->cooldown_until.tv_nsec +=
+        (dongle->cool_down % 1000) * 1000000L;
+
+    if (dongle->cooldown_until.tv_nsec >= 1000000000L)
+    {
+        dongle->cooldown_until.tv_sec +=
+            dongle->cooldown_until.tv_nsec / 1000000000L;
+
+        dongle->cooldown_until.tv_nsec %=
+            1000000000L;
+    }
 
     /*
      * Wake the next coder.

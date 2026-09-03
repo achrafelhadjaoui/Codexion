@@ -10,6 +10,7 @@
 #include <sys/time.h>
 
 
+
 /*=========================================================
    Forward Declarations
    These tell the compiler these structs exist.
@@ -18,12 +19,27 @@ typedef struct coder CODER;
 typedef struct dongle DONGLE;
 typedef struct monitor MONITOR;
 typedef struct s_simulation SIMULATION;
+typedef struct sim_and_mon SIM_AND_MON;
 
+
+/*=========================================================
+   SIMULATION
+=========================================================*/
 typedef struct s_simulation
 {
-   int start_time;
+   long start_time;
+   pthread_mutex_t logging_mutex;
 } SIMULATION;
 
+
+/*=========================================================
+   SIM & MON
+=========================================================*/
+typedef struct sim_and_mon
+{
+   SIMULATION *sim;
+   MONITOR *mon;
+} SIM_AND_MON;
 
 
 /*=========================================================
@@ -39,6 +55,7 @@ typedef struct dongle
 
     pthread_mutex_t dongle_mutex;
 
+    CODER *used_by;
     CODER *ready_coder[2];
 } DONGLE;
 
@@ -56,10 +73,11 @@ typedef struct coder
    int time_to_debug;
    int time_to_refac;
    int nub_of_compiles;
-   int start;
-   int last_compile;
+   long start;
+   long last_compile;
    int time_until_burnout;
    SIMULATION *simulation;
+   MONITOR *monitor;
 
    DONGLE *left;
    DONGLE *right;
@@ -74,28 +92,32 @@ typedef struct coder
 =========================================================*/
 typedef struct monitor
 {
-   /* Add monitoring variables later */
-   int time_to_burnout;
+
    int burnout_detected;
-   CODER *coder;
+   int finish_running;
 
    pthread_t monitor_thread;
    pthread_mutex_t monitor_mutex;
    pthread_cond_t monitor_cond;
+   pthread_cond_t activity_cond;
 } MONITOR;
 
 /*=========================================================
    Function Prototypes
 =========================================================*/
 void initialisation_and_creating_threads(int *data, char *policy);
-void coder_and_monitor_thread_creation(CODER *coder, int size, MONITOR *montor);
-int convert_to_milisecond();
+void coder_and_monitor_thread_creation(CODER *coder, int size, MONITOR *montor, DONGLE *dongle);
+long convert_to_milisecond();
 int convert_to_microsecond(int nb);
-void request_dongles(CODER *coder);
+int request_dongles(CODER *coder);
 void fifo_implementation(DONGLE *dongle, CODER *coder);
 void edf_implementation(DONGLE *dongle, CODER *coder);
 void release_dongles(CODER *coder);
-void debuging_and_refactoring(CODER *coder);
+int debuging(CODER *coder);
+int refactoring(CODER *coder);
+void get_abstime(struct timespec *abstime, int milliseconds);
+int compiling(CODER *coder);
+int checking_burnout(CODER *coder);
 
 #endif
 

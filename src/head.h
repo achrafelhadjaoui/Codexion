@@ -67,7 +67,7 @@ typedef struct coder
 {
    int id;
 
-
+   int nub_of_coders;
    int time_to_burnout;
    int time_to_compile;
    int time_to_debug;
@@ -95,6 +95,7 @@ typedef struct monitor
 
    int burnout_detected;
    int finish_running;
+   CODER *coders;
 
    pthread_t monitor_thread;
    pthread_mutex_t monitor_mutex;
@@ -118,6 +119,8 @@ int refactoring(CODER *coder);
 void get_abstime(struct timespec *abstime, int milliseconds);
 int compiling(CODER *coder);
 int checking_burnout(CODER *coder);
+void wake_all_coders(CODER *coder);
+
 
 #endif
 

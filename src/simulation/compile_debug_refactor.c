@@ -27,27 +27,35 @@ static int wait_for_activity(CODER *coder, int duration)
 
 int debuging(CODER *coder)
 {
+    pthread_mutex_lock(&coder->simulation->logging_mutex);
     printf("%ld %d is debugging\n",
         convert_to_milisecond() - coder->simulation->start_time,
         coder->id);
+    pthread_mutex_unlock(&coder->simulation->logging_mutex);
+    
 
     return (wait_for_activity(coder, coder->time_to_debug));
 }
 
 int refactoring(CODER *coder)
 {
+    pthread_mutex_lock(&coder->simulation->logging_mutex);
     printf("%ld %d is refactoring\n",
         convert_to_milisecond() - coder->simulation->start_time,
         coder->id);
+    pthread_mutex_unlock(&coder->simulation->logging_mutex);
 
     return (wait_for_activity(coder, coder->time_to_refac));
 }
 
 int compiling(CODER *coder)
 {
+    pthread_mutex_lock(&coder->simulation->logging_mutex);
     printf("%ld %d is compiling\n",
         convert_to_milisecond() - coder->simulation->start_time,
         coder->id);
+    pthread_mutex_unlock(&coder->simulation->logging_mutex);
+
 
     return (wait_for_activity(coder, coder->time_to_compile));
 }

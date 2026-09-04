@@ -46,6 +46,7 @@ static void coder_initialisation(
         coder[i].right =
             &dongle[i];
 
+        coder[i].nub_of_coders = arg[0];
         coder[i].time_to_burnout = arg[1];
         coder[i].time_to_compile = arg[2];
         coder[i].time_to_debug = arg[3];
@@ -69,10 +70,11 @@ static void coder_initialisation(
 }
 
 
-static void monitor_initialisation(MONITOR *monitor, int num_of_running)
+static void monitor_initialisation(MONITOR *monitor, CODER *coder, int num_of_running)
 {
     monitor->burnout_detected = 0;
     monitor->finish_running = num_of_running;
+    monitor->coders = coder;
 
     pthread_mutex_init(&monitor->monitor_mutex, NULL);
     pthread_cond_init(&monitor->monitor_cond, NULL);
@@ -115,7 +117,7 @@ void initialisation_and_creating_threads(int *arg, char *policy)
 
     dongle_initialisation(arg, dongle, policy);
 
-    monitor_initialisation(&monitor, arg[0]);
+    monitor_initialisation(&monitor, coder, arg[0]);
 
     coder_initialisation(
         arg,

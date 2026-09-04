@@ -1,34 +1,15 @@
 #include "../head.h"
+
+
+
 static void *routine(void *args)
 {
     CODER *coder;
+    int i;
 
     coder = (CODER *)args;
-
-    // while (coder->nub_of_compiles > 0)
-    // {
-    //     coder->start = convert_to_milisecond();
-    //     request_dongles(coder);
-
-
-    //     /*
-    //      * compile
-    //      */
-    //     pthread_mutex_lock(&coder->simulation->logging_mutex);
-    //     printf("%ld %d is compiling\n", (convert_to_milisecond() - coder->simulation->start_time), coder->id);
-    //     pthread_mutex_unlock(&coder->simulation->logging_mutex);
-
-    //     usleep(convert_to_microsecond(coder->time_to_compile));
-    //     coder->last_compile = convert_to_milisecond();
-
-    //     release_dongles(coder);
-    //     //printf("CODER %i RELEASE DONGLE\n", coder->id);
-    //     debuging_and_refactoring(coder);
-
-    //     coder->nub_of_compiles--;
-    // }
-
-    while (coder->nub_of_compiles > 0)
+    i = 0;
+    while (i < coder->nub_of_compiles)
     {
         coder->start = convert_to_milisecond();
 
@@ -51,7 +32,7 @@ static void *routine(void *args)
         if (refactoring(coder))
             return (NULL);
 
-        coder->nub_of_compiles--;
+        i++;
     }
 
     pthread_mutex_lock(&coder->monitor->monitor_mutex);
@@ -68,16 +49,25 @@ static void *monitor_routine(void *arg)
     MONITOR *monitor = (MONITOR *) arg;
 
     pthread_mutex_lock(&monitor->monitor_mutex);
-    while ( monitor-> burnout_detected != 1)
+    while ( monitor-> burnout_detected != 1 || monitor->finish_running != 0)
     {
         pthread_cond_wait(&monitor->monitor_cond, &monitor->monitor_mutex);
-    //     if (monitor->burnout_detected == 1 || monitor->finish_running == 0)
-    //         break;
+        if(monitor->burnout_detected == 1)
+            break;
+       
+    }
+    if (monitor->finish_running == 0)
+    {
+        pthread_mutex_unlock(&monitor->monitor_mutex);
+         return NULL;
     }
 
     pthread_cond_broadcast(&monitor->activity_cond);
-
     pthread_mutex_unlock(&monitor->monitor_mutex);
+
+    // also signal all the coders being waiting for dongle cooldown
+    wake_all_coders(monitor->coders);
+    
     return NULL;
 }
 

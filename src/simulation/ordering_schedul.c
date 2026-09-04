@@ -1,5 +1,18 @@
 #include "../head.h"
 
+
+static int simulation_stopped(CODER *coder)
+{
+    int stopped;
+
+    pthread_mutex_lock(&coder->monitor->monitor_mutex);
+    stopped = coder->monitor->burnout_detected;
+    pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+
+    return (stopped);
+}
+
+
 static int request_one_dongle(CODER *coder, DONGLE *dongle)
 {
 
@@ -8,6 +21,7 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
     /*
      * Add coder to the waiting queue.
      */
+
     if (strcmp(dongle->policy, "fifo") == 0)
     {
 
@@ -21,9 +35,18 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
 
     dongle->used_by = dongle->ready_coder[0];
 
-    while (dongle->used_by != coder ||
-           dongle->is_used != 0)
+    while (simulation_stopped(coder) != 1 && (dongle->used_by != coder ||
+           dongle->is_used != 0))
     {
+
+        if (simulation_stopped(coder))
+        {
+            dongle->ready_coder[0] = NULL;
+            dongle->ready_coder[1] = NULL;
+            pthread_mutex_unlock(&dongle->dongle_mutex);
+            return 1;
+        }
+
         if (dongle->is_used == 2)
         {
             /*
@@ -34,13 +57,8 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
                 &dongle->dongle_mutex,
                 &dongle->cooldown_until);
 
-            
 
-            /*
-             * Do not use ETIMEDOUT.
-             *
-             * Check the current time against cooldown_until.
-             */
+
             struct timespec now;
 
             clock_gettime(CLOCK_MONOTONIC, &now);
@@ -62,33 +80,51 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
                 &coder->coder_cond,
                 &dongle->dongle_mutex
             );
-      
+
         }
     }
+
+
+    if (checking_burnout(coder))
+    {
+        // pthread_mutex_lock(&coder->monitor->monitor_mutex);
+        coder->monitor->burnout_detected = 1;
+        pthread_cond_signal(&coder->monitor->monitor_cond);
+        pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+        pthread_mutex_unlock(&dongle->dongle_mutex);
+        return 1;
+    }
+
+
+
+
 
     /*
      * We are first in the queue and the dongle
      * is available.
      */
     dongle->is_used = 1;
+    pthread_mutex_lock(&coder->monitor->monitor_mutex);
     pthread_mutex_lock(&coder->simulation->logging_mutex);
+    if (coder->monitor->burnout_detected)
+    {
+        pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+        pthread_mutex_unlock(&coder->simulation->logging_mutex);
+        pthread_mutex_unlock(&dongle->dongle_mutex);
+        return 1;
+    }
     printf("%ld %d has taken a dongle\n", (convert_to_milisecond() - coder->simulation->start_time), coder->id);
-    pthread_mutex_unlock(&coder->simulation->logging_mutex);    
+    pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+    pthread_mutex_unlock(&coder->simulation->logging_mutex);
 
 
-    dongle->ready_coder[0] = dongle->ready_coder[1];
-    dongle->ready_coder[1] = NULL;
+    // dongle->ready_coder[0] = dongle->ready_coder[1];
+    // dongle->ready_coder[1] = NULL;
 
     pthread_mutex_unlock(&dongle->dongle_mutex);
 
-    if (checking_burnout(coder))
-    {
-        pthread_mutex_lock(&coder->monitor->monitor_mutex);
-        coder->monitor->burnout_detected = 1;
-        pthread_cond_signal(&coder->monitor->monitor_cond);
-        pthread_mutex_unlock(&coder->monitor->monitor_mutex);
-        return 1;
-    }
+
+
     return 0;
 }
 

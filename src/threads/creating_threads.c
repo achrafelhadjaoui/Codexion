@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   creating_threads.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/06 03:46:18 by aelhadja          #+#    #+#             */
+/*   Updated: 2026/09/06 03:46:21 by aelhadja         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../head.h"
 
 
@@ -16,13 +28,16 @@ static void *routine(void *args)
         if (request_dongles(coder))
             return NULL;
 
+        
+        coder->last_compile = convert_to_milisecond();
+
         if (compiling(coder))
         {
             release_dongles(coder);
             return (NULL);
         }
 
-        coder->last_compile = convert_to_milisecond();
+        // coder->last_compile = convert_to_milisecond();
 
         release_dongles(coder);
 
@@ -51,16 +66,23 @@ static void *monitor_routine(void *arg)
     pthread_mutex_lock(&monitor->monitor_mutex);
     while ( monitor-> burnout_detected != 1 || monitor->finish_running != 0)
     {
+        
         pthread_cond_wait(&monitor->monitor_cond, &monitor->monitor_mutex);
+
         if(monitor->burnout_detected == 1)
             break;
+        if (monitor->finish_running == 0)
+        {
+            pthread_mutex_unlock(&monitor->monitor_mutex);
+            return NULL;
+        }
        
     }
-    if (monitor->finish_running == 0)
-    {
-        pthread_mutex_unlock(&monitor->monitor_mutex);
-         return NULL;
-    }
+    // if (monitor->finish_running == 0)
+    // {
+    //     pthread_mutex_unlock(&monitor->monitor_mutex);
+    //      return NULL;
+    // }
 
     pthread_cond_broadcast(&monitor->activity_cond);
     pthread_mutex_unlock(&monitor->monitor_mutex);

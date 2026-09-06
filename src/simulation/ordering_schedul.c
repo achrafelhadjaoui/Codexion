@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ordering_schedul.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/06 03:45:05 by aelhadja          #+#    #+#             */
+/*   Updated: 2026/09/06 03:45:10 by aelhadja         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../head.h"
 
 
@@ -84,7 +96,6 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
         }
     }
 
-
     if (checking_burnout(coder))
     {
         // pthread_mutex_lock(&coder->monitor->monitor_mutex);
@@ -105,21 +116,21 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
      */
     dongle->is_used = 1;
     pthread_mutex_lock(&coder->monitor->monitor_mutex);
-    pthread_mutex_lock(&coder->simulation->logging_mutex);
     if (coder->monitor->burnout_detected)
     {
         pthread_mutex_unlock(&coder->monitor->monitor_mutex);
-        pthread_mutex_unlock(&coder->simulation->logging_mutex);
         pthread_mutex_unlock(&dongle->dongle_mutex);
         return 1;
     }
+    pthread_mutex_lock(&coder->simulation->logging_mutex);
     printf("%ld %d has taken a dongle\n", (convert_to_milisecond() - coder->simulation->start_time), coder->id);
-    pthread_mutex_unlock(&coder->monitor->monitor_mutex);
     pthread_mutex_unlock(&coder->simulation->logging_mutex);
+    pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+    
 
 
-    // dongle->ready_coder[0] = dongle->ready_coder[1];
-    // dongle->ready_coder[1] = NULL;
+    dongle->ready_coder[0] = dongle->ready_coder[1];
+    dongle->ready_coder[1] = NULL;
 
     pthread_mutex_unlock(&dongle->dongle_mutex);
 
@@ -130,6 +141,19 @@ static int request_one_dongle(CODER *coder, DONGLE *dongle)
 
 int request_dongles(CODER *coder)
 {
+    if (coder->left == coder->right)
+    {
+        usleep(convert_to_microsecond(coder->time_to_burnout));
+        pthread_cond_signal(&coder->monitor->monitor_cond);
+        pthread_mutex_lock(&coder->monitor->monitor_mutex);
+        pthread_mutex_lock(&coder->simulation->logging_mutex);
+        printf("%ld %d burned out\n", convert_to_milisecond() - coder->simulation->start_time, coder->id);
+        pthread_mutex_unlock(&coder->simulation->logging_mutex);
+        coder->monitor->burnout_detected = 1;
+        pthread_cond_signal(&coder->monitor->monitor_cond);
+        pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+        return 1;
+    }
     if (coder->id % 2 == 0)
     {
         if (request_one_dongle(coder, coder->left))

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   initialisations.c                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/06 03:46:48 by aelhadja          #+#    #+#             */
+/*   Updated: 2026/09/06 03:46:52 by aelhadja         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../head.h"
 
 
@@ -9,7 +21,7 @@ static void dongle_initialisation(int *arg, DONGLE *dongle, char *policy)
     i = 0;
     while (i < arg[0])
     {
-        dongle[i].id = i;
+        dongle[i].id = i+1;
         dongle[i].is_used = 0;
         dongle[i].cool_down = arg[6];
         dongle[i].policy = policy;
@@ -38,7 +50,7 @@ static void coder_initialisation(
     i = 0;
     while (i < arg[0])
     {
-        coder[i].id = i;
+        coder[i].id = i+1;
 
         coder[i].left =
             &dongle[(i - 1 + arg[0]) % arg[0]];

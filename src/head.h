@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   head.h                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/06 03:41:30 by aelhadja          #+#    #+#             */
+/*   Updated: 2026/09/06 03:41:44 by aelhadja         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef LIB_H
 #define LIB_H
 
@@ -109,14 +121,14 @@ typedef struct monitor
 void initialisation_and_creating_threads(int *data, char *policy);
 void coder_and_monitor_thread_creation(CODER *coder, int size, MONITOR *montor, DONGLE *dongle);
 long convert_to_milisecond();
-int convert_to_microsecond(int nb);
+long convert_to_microsecond(int nb);
 int request_dongles(CODER *coder);
 void fifo_implementation(DONGLE *dongle, CODER *coder);
 void edf_implementation(DONGLE *dongle, CODER *coder);
 void release_dongles(CODER *coder);
 int debuging(CODER *coder);
 int refactoring(CODER *coder);
-void get_abstime(struct timespec *abstime, int milliseconds);
+void get_abstime(struct timespec *abstime, long milliseconds);
 int compiling(CODER *coder);
 int checking_burnout(CODER *coder);
 void wake_all_coders(CODER *coder);

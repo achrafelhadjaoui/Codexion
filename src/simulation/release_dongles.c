@@ -12,64 +12,49 @@
 
 #include "../head.h"
 
-static void release_one_dongle(DONGLE *dongle)
+static void	release_one_dongle(t_dongle *dongle)
 {
-    struct timespec now;
+	struct timespec	now;
 
-    pthread_mutex_lock(&dongle->dongle_mutex);
-
-    /*
-     * Dongle enters cooldown.
-     */
-    dongle->is_used = 2;
-
-    /*
-     * Calculate when the cooldown ends.
-     */
-    clock_gettime(CLOCK_MONOTONIC, &now);
-
-    dongle->cooldown_until = now;
-
-    dongle->cooldown_until.tv_sec +=
-        dongle->cool_down / 1000;
-
-    dongle->cooldown_until.tv_nsec +=
-        (dongle->cool_down % 1000) * 1000000L;
-
-    if (dongle->cooldown_until.tv_nsec >= 1000000000L)
-    {
-        dongle->cooldown_until.tv_sec +=
-            dongle->cooldown_until.tv_nsec / 1000000000L;
-
-        dongle->cooldown_until.tv_nsec %=
-            1000000000L;
-    }
-
-    /*
-     * Wake the next coder.
-     *
-     * It will notice that the dongle is in cooldown
-     * and use pthread_cond_timedwait().
-     */
-    if (dongle->ready_coder[0])
-    {
-        pthread_cond_signal(
-            &dongle->ready_coder[0]->coder_cond
-        );
-    }
-
-    pthread_mutex_unlock(&dongle->dongle_mutex);
+	pthread_mutex_lock(&dongle->dongle_mutex);
+	/*
+		* Dongle enters cooldown.
+		*/
+	dongle->is_used = 2;
+	/*
+		* Calculate when the cooldown ends.
+		*/
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	dongle->cooldown_until = now;
+	dongle->cooldown_until.tv_sec += dongle->cool_down / 1000;
+	dongle->cooldown_until.tv_nsec += (dongle->cool_down % 1000) * 1000000L;
+	if (dongle->cooldown_until.tv_nsec >= 1000000000L)
+	{
+		dongle->cooldown_until.tv_sec += dongle->cooldown_until.tv_nsec
+			/ 1000000000L;
+		dongle->cooldown_until.tv_nsec %= 1000000000L;
+	}
+	/*
+		* Wake the next coder.
+		*
+		* It will notice that the dongle is in cooldown
+		* and use pthread_cond_timedwait().
+		*/
+	if (dongle->ready_coder[0])
+	{
+		pthread_cond_signal(&dongle->ready_coder[0]->coder_cond);
+	}
+	pthread_mutex_unlock(&dongle->dongle_mutex);
 }
 
-void release_dongles(CODER *coder)
+void	release_dongles(t_coder *coder)
 {
-    release_one_dongle(coder->left);
-    release_one_dongle(coder->right);
-
-    /*
-     * Nothing else here.
-     *
-     * The coder can now immediately enter
-     * debugging/refactoring.
-     */
+	release_one_dongle(coder->left);
+	release_one_dongle(coder->right);
+	/*
+		* Nothing else here.
+		*
+		* The coder can now immediately enter
+		* debugging/refactoring.
+		*/
 }

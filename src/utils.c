@@ -6,7 +6,7 @@
 /*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/06 03:42:21 by aelhadja          #+#    #+#             */
-/*   Updated: 2026/09/06 03:42:26 by aelhadja         ###   ########.fr       */
+/*   Updated: 2026/09/06 04:23:49 by aelhadja         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ long	convert_to_milisecond(void)
 	struct timeval	tv;
 
 	gettimeofday(&tv, NULL);
-	return ((long)tv.tv_sec * 1000L) + ((long)tv.tv_usec / 1000L);
+	return (((long)tv.tv_sec * 1000L) + ((long)tv.tv_usec / 1000L));
 }
 
 void	get_abstime(struct timespec *abstime, long milliseconds)
@@ -37,7 +37,7 @@ void	get_abstime(struct timespec *abstime, long milliseconds)
 	}
 }
 
-int	checking_burnout(CODER *coder)
+int	checking_burnout(t_coder *coder)
 {
 	long	current_time;
 	long	time_since_compile;
@@ -59,15 +59,12 @@ int	checking_burnout(CODER *coder)
 	return (0);
 }
 
-void	wake_all_coders(CODER *coder)
+void	wake_all_coders(t_coder *coder)
 {
-	int i;
-	int size;
+	int	i;
+	int	size;
 
 	size = coder->nub_of_coders;
-
-	// pthread_cond_broadcast(&coder->monitor->activity_cond);
-
 	i = 0;
 	while (i < size)
 	{

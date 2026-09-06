@@ -12,38 +12,34 @@
 
 #include "../head.h"
 
-void edf_implementation(DONGLE *dongle, CODER *coder)
+void	edf_implementation(t_dongle *dongle, t_coder *coder)
 {
-    CODER *tmp;
+	t_coder	*tmp;
 
-    /*
-     * EDF deadline:
-     *
-     * last compilation finish time
-     * + allowed burnout time.
-     */
-    coder->time_until_burnout =
-        coder->last_compile + coder->time_to_burnout;
-
-    if (dongle->ready_coder[0] == NULL)
-    {
-        dongle->ready_coder[0] = coder;
-    }
-    else if (dongle->ready_coder[1] == NULL)
-    {
-        if (coder->time_until_burnout <
-                dongle->ready_coder[0]->time_until_burnout ||
-            (coder->time_until_burnout ==
-                dongle->ready_coder[0]->time_until_burnout &&
-             coder->id < dongle->ready_coder[0]->id))
-        {
-            tmp = dongle->ready_coder[0];
-            dongle->ready_coder[0] = coder;
-            dongle->ready_coder[1] = tmp;
-        }
-        else
-        {
-            dongle->ready_coder[1] = coder;
-        }
-    }
+	/*
+		* EDF deadline:
+		*
+		* last compilation finish time
+		* + allowed burnout time.
+		*/
+	coder->time_until_burnout = coder->last_compile + coder->time_to_burnout;
+	if (dongle->ready_coder[0] == NULL)
+	{
+		dongle->ready_coder[0] = coder;
+	}
+	else if (dongle->ready_coder[1] == NULL)
+	{
+		if (coder->time_until_burnout < dongle->ready_coder[0]->time_until_burnout
+			|| (coder->time_until_burnout == dongle->ready_coder[0]->time_until_burnout
+				&& coder->id < dongle->ready_coder[0]->id))
+		{
+			tmp = dongle->ready_coder[0];
+			dongle->ready_coder[0] = coder;
+			dongle->ready_coder[1] = tmp;
+		}
+		else
+		{
+			dongle->ready_coder[1] = coder;
+		}
+	}
 }

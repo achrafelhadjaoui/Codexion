@@ -106,4 +106,5 @@ int								checking_burnout(t_coder *coder);
 void							wake_all_coders(t_coder *coder);
 void							stop_threads(t_monitor *monitor);
 int								simulation_stopped(t_coder *coder);
+void							mention_to_stop_threads(t_monitor *monitor);
 #endif

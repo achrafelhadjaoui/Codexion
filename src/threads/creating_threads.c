@@ -76,7 +76,7 @@ static void	*monitor_routine(void *arg)
 	//     pthread_mutex_unlock(&monitor->monitor_mutex);
 	//      return (NULL);
 	// }
-	pthread_cond_broadcast(&monitor->activity_cond);
+	//pthread_cond_broadcast(&monitor->activity_cond);
 	pthread_mutex_unlock(&monitor->monitor_mutex);
 	// also signal all the coders being waiting for dongle cooldown
 	wake_all_coders(monitor->coders);

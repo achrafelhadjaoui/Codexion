@@ -66,7 +66,9 @@ typedef struct s_coder
 	t_monitor					*monitor;
 	t_dongle					*left;
 	t_dongle					*right;
+	t_dongle					*waiting_dongle;
 	pthread_t					thread;
+	pthread_mutex_t				waiting_mutex;
 	pthread_cond_t				coder_cond;
 }								t_coder;
 

@@ -59,16 +59,41 @@ int	checking_burnout(t_coder *coder)
 	return (0);
 }
 
+// void	wake_all_coders(t_coder *coder)
+// {
+// 	int	i;
+// 	int	size;
+
+// 	size = coder->nub_of_coders;
+// 	i = 0;
+// 	while (i < size)
+// 	{
+// 		pthread_cond_broadcast(&coder[i].coder_cond);
+// 		i++;
+// 	}
+// }
+
+
 void	wake_all_coders(t_coder *coder)
 {
-	int	i;
-	int	size;
+	int			i;
+	int			size;
+	t_dongle	*dongle;
 
 	size = coder->nub_of_coders;
 	i = 0;
 	while (i < size)
 	{
-		pthread_cond_signal(&coder[i].coder_cond);
+		pthread_mutex_lock(&coder[i].waiting_mutex);
+		dongle = coder[i].waiting_dongle;
+		pthread_mutex_unlock(&coder[i].waiting_mutex);
+
+		if (dongle != NULL)
+		{
+			pthread_mutex_lock(&dongle->dongle_mutex);
+			pthread_cond_signal(&coder[i].coder_cond);
+			pthread_mutex_unlock(&dongle->dongle_mutex);
+		}
 		i++;
 	}
 }

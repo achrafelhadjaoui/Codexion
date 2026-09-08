@@ -112,6 +112,7 @@ static int	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 		coder[i].nub_of_compiles = arg[5];
 		coder[i].last_compile = simulation->start_time;
 		coder[i].monitor = monitor;
+		coder[i].waiting_dongle = NULL;
 		/*
 			* All coders point to the SAME simulation.
 			*/
@@ -120,6 +121,11 @@ static int	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 		{
 			destroying_initilized_coders(coder, i);
 			return 1;
+		}
+		if (pthread_mutex_init(&coder[i].waiting_mutex, NULL) != 0)
+		{
+			destroying_initilized_coders(coder, i);
+			return (1);
 		}
 		i++;
 	}

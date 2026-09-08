@@ -16,10 +16,10 @@ void	stop_threads(t_monitor *monitor)
 {
 	pthread_mutex_lock(&monitor->monitor_mutex);
 	monitor->burnout_detected = 1;
-	pthread_cond_broadcast(&monitor->monitor_cond);
+	pthread_cond_signal(&monitor->monitor_cond);
 	pthread_cond_broadcast(&monitor->activity_cond);
 	pthread_mutex_unlock(&monitor->monitor_mutex);
-	//wake_all_coders(monitor->coders);
+	wake_all_coders(monitor->coders);
 }
 
 int	simulation_stopped(t_coder *coder)

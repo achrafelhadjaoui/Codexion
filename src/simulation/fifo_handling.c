@@ -18,17 +18,24 @@
 * start working on it using heap algo
 */
 
-extract()
-
-void insert_to_array(t_coder *coder)
+static void push(t_coder *ready_queue, t_coder *add_coder, int capacity, int *index)
 {
-	
+    if (ready_queue[(*index - 1)/2])
+    {
+        heapify()
+    }
+
 }
 
+static t_coder *heapify()
 
-void	fifo_implementation(t_dongle *dongle, t_coder *coder, int size)
+
+void	fifo_implementation(t_coder *coder_ready_queue, t_coder *add_coder, int capacity)
 {
+    int index;
 
+    index = 0;
+    push(coder_ready_queue, add_coder, capacity, &index)
 }
 // void	fifo_implementation(t_dongle *dongle, t_coder *coder)
 // {

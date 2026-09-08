@@ -12,6 +12,12 @@
 
 #include "../head.h"
 
+static void free_mem(t_coder *coder, t_dongle *dongle)
+{
+	free(dongle);
+	free(coder);
+}
+
 static void destroying_initilized_dongles(t_dongle *dongle, int size)
 {
 	int	i;
@@ -53,7 +59,7 @@ static void destroy_and_free(t_coder *coder, t_dongle *dongle, t_sim_and_mon *si
 
 	pthread_mutex_destroy(&sim->logging_mutex);
 	destroying_initilized_dongles(dongle, size);
-	destroying_initilaized_monitor(&monitor);
+	destroying_initilaized_monitor(monitor);
 	destroying_initilized_coders(coder, size);
 	free_mem(coder, dongle);
 }
@@ -142,11 +148,7 @@ static int	monitor_initialisation(t_monitor *monitor, t_coder *coder,
 	return (0);
 }
 
-static void free_mem(t_coder *coder, t_dongle *dongle)
-{
-	free(dongle);
-	free(coder);
-}
+
 
 void	initialisation_and_creating_threads(int *arg, char *policy)
 {
@@ -200,6 +202,6 @@ void	initialisation_and_creating_threads(int *arg, char *policy)
 		free_mem(coder, dongle);
 		return ;
 	}
-	coder_and_monitor_thread_creation(coder, arg[0], &monitor, dongle);
+	coder_and_monitor_thread_creation(coder, arg[0], &monitor);
 	destroy_and_free(coder, dongle, &sim_mon, arg[0]);
 }

@@ -12,7 +12,53 @@
 
 #include "../head.h"
 
-static void	dongle_initialisation(int *arg, t_dongle *dongle, char *policy)
+static void destroying_initilized_dongles(t_dongle *dongle, int size)
+{
+	int	i;
+
+	i = 0;
+	while (i < size)
+	{
+		pthread_mutex_destroy(&dongle[i].dongle_mutex);
+		i++;
+	}
+}
+
+static void destroying_initilized_coders(t_coder *coder, int size)
+{
+	int	i;
+
+	i = 0;
+	while (i < size)
+	{
+		pthread_cond_destroy(&coder[i].coder_cond);
+		i++;
+	}
+}
+
+static void destroying_initilaized_monitor(t_monitor *monitor)
+{
+	pthread_mutex_destroy(&monitor->monitor_mutex);
+	pthread_cond_destroy(&monitor->monitor_cond);
+	pthread_cond_destroy(&monitor->activity_cond);
+}
+
+static void destroy_and_free(t_coder *coder, t_dongle *dongle, t_sim_and_mon *sim_and_mon, int size)
+{
+	t_monitor *monitor;
+	t_simulation *sim;
+
+	monitor = sim_and_mon->mon;
+	sim = sim_and_mon->sim;
+
+	pthread_mutex_destroy(&sim->logging_mutex);
+	destroying_initilized_dongles(dongle, size);
+	destroying_initilaized_monitor(&monitor);
+	destroying_initilized_coders(coder, size);
+	free_mem(coder, dongle);
+}
+
+static int	dongle_initialisation(int *arg, t_dongle *dongle, char *policy)
 {
 	int	i;
 
@@ -26,12 +72,18 @@ static void	dongle_initialisation(int *arg, t_dongle *dongle, char *policy)
 		dongle[i].ready_coder[0] = NULL;
 		dongle[i].ready_coder[1] = NULL;
 		dongle[i].used_by = NULL;
-		pthread_mutex_init(&dongle[i].dongle_mutex, NULL);
+		if (pthread_mutex_init(&dongle[i].dongle_mutex, NULL) != 0)
+		{
+			destroying_initilized_dongles(dongle, i);
+			return (1);
+		}
 		i++;
 	}
+	return 0;
 }
 
-static void	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
+
+static int	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 		t_sim_and_mon *sim_mon)
 {
 	t_monitor		*monitor;
@@ -58,20 +110,42 @@ static void	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 			* All coders point to the SAME simulation.
 			*/
 		coder[i].simulation = simulation;
-		pthread_cond_init(&coder[i].coder_cond, NULL);
+		if (pthread_cond_init(&coder[i].coder_cond, NULL) != 0)
+		{
+			destroying_initilized_coders(coder, i);
+			return 1;
+		}
 		i++;
 	}
+	return 0;
 }
 
-static void	monitor_initialisation(t_monitor *monitor, t_coder *coder,
+static int	monitor_initialisation(t_monitor *monitor, t_coder *coder,
 		int num_of_running)
 {
 	monitor->burnout_detected = 0;
 	monitor->finish_running = num_of_running;
 	monitor->coders = coder;
-	pthread_mutex_init(&monitor->monitor_mutex, NULL);
-	pthread_cond_init(&monitor->monitor_cond, NULL);
-	pthread_cond_init(&monitor->activity_cond, NULL);
+	if (pthread_mutex_init(&monitor->monitor_mutex, NULL) != 0)
+		return (1);
+	if (pthread_cond_init(&monitor->monitor_cond, NULL) != 0)
+	{
+		pthread_mutex_destroy(&monitor->monitor_mutex);
+		return (1);
+	}
+	if (pthread_cond_init(&monitor->activity_cond, NULL) != 0)
+	{
+		pthread_mutex_destroy(&monitor->monitor_mutex);
+		pthread_cond_destroy(&monitor->monitor_cond);
+		return (1);
+	}
+	return (0);
+}
+
+static void free_mem(t_coder *coder, t_dongle *dongle)
+{
+	free(dongle);
+	free(coder);
 }
 
 void	initialisation_and_creating_threads(int *arg, char *policy)
@@ -84,16 +158,12 @@ void	initialisation_and_creating_threads(int *arg, char *policy)
 
 	dongle = malloc(sizeof(*dongle) * arg[0]);
 	if (!dongle)
-	{
-		free(arg);
-		exit(3);
-	}
+		return ;
 	coder = malloc(sizeof(*coder) * arg[0]);
 	if (!coder)
 	{
 		free(dongle);
-		free(arg);
-		exit(3);
+		return ;
 	}
 	/*
 		* The simulation starts here.
@@ -103,11 +173,33 @@ void	initialisation_and_creating_threads(int *arg, char *policy)
 	simulation.start_time = convert_to_milisecond();
 	sim_mon.sim = &simulation;
 	sim_mon.mon = &monitor;
-	pthread_mutex_init(&simulation.logging_mutex, NULL);
-	dongle_initialisation(arg, dongle, policy);
-	monitor_initialisation(&monitor, coder, arg[0]);
-	coder_initialisation(arg, dongle, coder, &sim_mon);
+	if (pthread_mutex_init(&simulation.logging_mutex, NULL) != 0)
+	{
+		free_mem(coder, dongle);
+		return ;
+	}
+	if (dongle_initialisation(arg, dongle, policy))
+	{
+		pthread_mutex_destroy(&simulation.logging_mutex);
+		free_mem(coder, dongle);
+		return ;
+	}
+	if (monitor_initialisation(&monitor, coder, arg[0]))
+	{
+		pthread_mutex_destroy(&simulation.logging_mutex);
+		destroying_initilized_dongles(dongle, arg[0]);
+		free_mem(coder, dongle);
+		return ;
+
+	}
+	if (coder_initialisation(arg, dongle, coder, &sim_mon))
+	{
+		pthread_mutex_destroy(&simulation.logging_mutex);
+		destroying_initilized_dongles(dongle, arg[0]);
+		destroying_initilaized_monitor(&monitor);
+		free_mem(coder, dongle);
+		return ;
+	}
 	coder_and_monitor_thread_creation(coder, arg[0], &monitor, dongle);
-	free(coder);
-	free(dongle);
+	destroy_and_free(coder, dongle, &sim_mon, arg[0]);
 }

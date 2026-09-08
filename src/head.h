@@ -44,7 +44,7 @@ typedef struct s_dongle
 	int							cool_down;
 	int							is_used;
 	char						*policy;
-	struct timespec				cooldown_until;
+	long						cooldown_until;
 	pthread_mutex_t				dongle_mutex;
 	t_coder						*used_by;
 	t_coder						*ready_coder[2];
@@ -86,8 +86,7 @@ void							initialisation_and_creating_threads(int *data,
 void							coder_and_monitor_thread_creation(
 									t_coder	*coder,
 									int size,
-									t_monitor *montor,
-									t_dongle *dongle);
+									t_monitor *montor);
 long							convert_to_milisecond(void);
 long							convert_to_microsecond(int nb);
 int								request_dongles(t_coder *coder);
@@ -103,5 +102,6 @@ void							get_abstime(struct timespec *abstime,
 int								compiling(t_coder *coder);
 int								checking_burnout(t_coder *coder);
 void							wake_all_coders(t_coder *coder);
-
+void							stop_threads(t_monitor *monitor);
+int								simulation_stopped(t_coder *coder);
 #endif

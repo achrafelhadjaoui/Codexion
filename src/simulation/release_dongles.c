@@ -14,26 +14,14 @@
 
 static void	release_one_dongle(t_dongle *dongle)
 {
-	struct timespec	now;
-
 	pthread_mutex_lock(&dongle->dongle_mutex);
 	/*
 		* Dongle enters cooldown.
 		*/
 	dongle->is_used = 2;
-	/*
-		* Calculate when the cooldown ends.
-		*/
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	dongle->cooldown_until = now;
-	dongle->cooldown_until.tv_sec += dongle->cool_down / 1000;
-	dongle->cooldown_until.tv_nsec += (dongle->cool_down % 1000) * 1000000L;
-	if (dongle->cooldown_until.tv_nsec >= 1000000000L)
-	{
-		dongle->cooldown_until.tv_sec += dongle->cooldown_until.tv_nsec
-			/ 1000000000L;
-		dongle->cooldown_until.tv_nsec %= 1000000000L;
-	}
+
+	dongle->cooldown_until = convert_to_milisecond() + dongle->cool_down;
+
 	/*
 		* Wake the next coder.
 		*

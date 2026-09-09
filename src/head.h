@@ -86,9 +86,8 @@ typedef struct s_monitor
 void							initialisation_and_creating_threads(int *data,
 									char *policy);
 void							coder_and_monitor_thread_creation(
-									t_coder	*coder,
-									int size,
-									t_monitor *montor);
+									t_coder *coder,
+									int size, t_monitor *montor);
 long							convert_to_milisecond(void);
 long							convert_to_microsecond(int nb);
 int								request_dongles(t_coder *coder);
@@ -108,4 +107,27 @@ void							wake_all_coders(t_coder *coder);
 void							stop_threads(t_monitor *monitor);
 int								simulation_stopped(t_coder *coder);
 void							mention_to_stop_threads(t_monitor *monitor);
+int								wait_for_activity(t_coder *coder, int duration);
+int								wait_remaining(long remaining, t_coder *coder);
+void							handle_burnout(long remaining, t_coder *coder);
+void							coder_to_wating_queue(t_coder *coder,
+									t_dongle *dongle);
+void							lock_two_dongles(t_dongle *left,
+									t_dongle *right);
+void							unlock_two_dongles(t_dongle *left,
+									t_dongle *right);
+int								head_is_blocked(t_dongle *dongle,
+									t_coder *coder);
+int								dongle_is_free(t_dongle *dongle,
+									t_coder *coder);
+void							coder_finished(t_coder *coder);
+void							free_mem(t_coder *coder, t_dongle *dongle);
+void							destroying_initilized_dongles(
+									t_dongle *dongle, int size);
+void							destroying_initilaized_monitor(
+									t_monitor *monitor);
+void							destroy_and_free(t_coder *coder,
+									t_dongle *dongle,
+									t_sim_and_mon *sim_and_mon, int size);
+
 #endif

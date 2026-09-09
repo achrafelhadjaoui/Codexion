@@ -15,9 +15,10 @@ CFLAGS   := -Wall -Wextra -Werror -pthread
 
 NAME     := codexion
 TARGET   := $(NAME)
-SRCS     := src/main.c src/threads/creating_threads.c src/threads/initialisations.c src/helper.c \
-			src/utils.c src/simulation/edf_handling.c src/simulation/fifo_handling.c \
-			src/simulation/ordering_schedul.c src/simulation/release_dongles.c src/simulation/compile_debug_refactor.c
+SRCS     := src/main.c src/threads/creating_threads.c src/threads/initialisations.c src/helper.c src/threads/threads_helper.c \
+			src/threads/destroying.c src/utils.c src/simulation/edf_handling.c src/simulation/fifo_handling.c \
+			src/simulation/ordering_schedul.c src/simulation/release_dongles.c src/simulation/compile_debug_refactor.c \
+			src/simulation/activity_helper.c src/simulation/scheduel_ordering_helper.c
 
 # SRCS :=
 #     src/main.c

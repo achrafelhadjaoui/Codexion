@@ -6,7 +6,7 @@
 /*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/06 03:46:18 by aelhadja          #+#    #+#             */
-/*   Updated: 2026/09/06 03:46:21 by aelhadja         ###   ########.fr       */
+/*   Updated: 2026/09/09 22:05:17 by aelhadja         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@ static void	*routine(void *args)
 			release_dongles(coder);
 			return (NULL);
 		}
-		// coder->last_compile = convert_to_milisecond();
 		release_dongles(coder);
 		if (debuging(coder))
 			return (NULL);
@@ -36,19 +35,7 @@ static void	*routine(void *args)
 			return (NULL);
 		i++;
 	}
-	if (pthread_mutex_lock(&coder->monitor->monitor_mutex) != 0)
-	{
-		stop_threads(coder->monitor);
-		return (NULL);
-	}
-	coder->monitor->finish_running -= 1;
-	if (pthread_cond_signal(&coder->monitor->monitor_cond) != 0)
-	{
-		pthread_mutex_unlock(&coder->monitor->monitor_mutex);
-		stop_threads(coder->monitor);
-		return (NULL);
-	}
-	pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+	coder_finished(coder);
 	return (NULL);
 }
 
@@ -58,20 +45,12 @@ static void	*monitor_routine(void *arg)
 
 	monitor = (t_monitor *)arg;
 	pthread_mutex_lock(&monitor->monitor_mutex);
-	/*
-		* Predicate loop: keep waiting only while nobody burned out AND
-		* some coder is still running.
-		*
-		* Re-testing the predicate before waiting is what makes a signal
-		* sent before this thread got scheduled harmless.
-		*/
 	while (monitor->burnout_detected != 1 && monitor->finish_running != 0)
 		pthread_cond_wait(&monitor->monitor_cond, &monitor->monitor_mutex);
 	pthread_mutex_unlock(&monitor->monitor_mutex);
 	wake_all_coders(monitor->coders);
 	return (NULL);
 }
-
 
 static int	create_threads(t_coder *coder, t_monitor *monitor, int size)
 {
@@ -120,7 +99,6 @@ static int	create_monitor(t_monitor *monitor, int size)
 	return (0);
 }
 
-
 void	coder_and_monitor_thread_creation(t_coder *coder, int size,
 		t_monitor *monitor)
 {
@@ -146,41 +124,3 @@ void	coder_and_monitor_thread_creation(t_coder *coder, int size,
 		return ;
 	}
 }
-
-
-// void	coder_and_monitor_thread_creation(t_coder *coder, int size,
-// 		t_monitor *monitor, t_dongle *dongle)
-// {
-// 	int	i;
-
-// 	i = 0;
-// 	while (i < size)
-// 	{
-// 		if (pthread_create(&coder[i].thread, NULL, routine, &coder[i]) != 0)
-// 		{
-// 			exit(3);
-// 		}
-// 		i++;
-// 	}
-// 	if (pthread_create(&monitor->monitor_thread, NULL, monitor_routine,
-// 			monitor) != 0)
-// 		exit(3);
-// 	i = 0;
-// 	while (i < size)
-// 	{
-// 		if (pthread_join(coder[i].thread, NULL) != 0)
-// 			exit(3);
-// 		i++;
-// 	}
-// 	if (pthread_join(monitor->monitor_thread, NULL) != 0)
-// 		exit(3);
-// 	i = 0;
-// 	while (i < size)
-// 	{
-// 		pthread_cond_destroy(&coder[i].coder_cond);
-// 		pthread_mutex_destroy(&dongle[i].dongle_mutex);
-// 		i++;
-// 	}
-// 	pthread_mutex_destroy(&monitor->monitor_mutex);
-// 	pthread_cond_destroy(&monitor->monitor_cond);
-// }

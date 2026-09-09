@@ -24,13 +24,7 @@ void	coder_to_wating_queue(t_coder *coder, t_dongle *dongle)
 	}
 }
 
-/*
-	* Both dongle mutexes have to be held at the same time, so they are
-	* always locked in id order.
-	*
-	* Two coders can therefore never hold them in opposite order, which is
-	* what makes the pair atomic without deadlocking.
-	*/
+
 void	lock_two_dongles(t_dongle *left, t_dongle *right)
 {
 	if (left->id < right->id)
@@ -51,26 +45,7 @@ void	unlock_two_dongles(t_dongle *left, t_dongle *right)
 	pthread_mutex_unlock(&right->dongle_mutex);
 }
 
-/*
-	* Can the coder at the head of this dongle's queue actually use it
-	* right now, or is it stuck on its OTHER dongle?
-	*
-	* A head that cannot move must not block the coder behind it: that
-	* gate serialised the whole ring, one compile at a time, and every
-	* coder then burned out exactly time_to_burnout after its last one.
-	*
-	* The head publishes the answer itself: on every attempt it records
-	* whether each of its two dongles was available to it, and it does so
-	* while holding BOTH dongle mutexes. Reading those two fields here is
-	* therefore protected by this dongle's own mutex - the writer holds
-	* it too - and no coder ever touches a dongle that is not its own.
-	*
-	* A hungrier head is never overtaken, blocked or not. Without that
-	* floor the ring settles into a stable alternation - two pairs
-	* compiling every cooldown, the fifth coder always bypassed on
-	* whichever of its two dongles happens to be free that instant - and
-	* that coder burns out while the others keep compiling.
-	*/
+
 int	head_is_blocked(t_dongle *dongle, t_coder *coder)
 {
 	t_coder	*head;
@@ -85,13 +60,6 @@ int	head_is_blocked(t_dongle *dongle, t_coder *coder)
 	return (head->left_free_last == 0);
 }
 
-/*
-	* A dongle is available to this coder when its cooldown is over and
-	* either the coder is at the head of its ready queue - which is where
-	* the fifo/edf order is enforced - or that head cannot take it now.
-	*
-	* The cooldown flip lives here because nothing else ever clears it.
-	*/
 int	dongle_is_free(t_dongle *dongle, t_coder *coder)
 {
 	if (dongle->is_used == 2

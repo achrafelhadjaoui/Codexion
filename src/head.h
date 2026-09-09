@@ -38,11 +38,16 @@ typedef struct s_sim_and_mon
 	t_monitor					*mon;
 }								t_sim_and_mon;
 
+
+
+
 typedef struct s_dongle
 {
 	int							id;
 	int							cool_down;
 	int							is_used;
+	int							index;
+	int							capacity;
 	char						*policy;
 	long						cooldown_until;
 	pthread_mutex_t				dongle_mutex;

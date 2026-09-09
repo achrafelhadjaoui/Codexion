@@ -21,6 +21,8 @@ static void	dongle_initialisation(int *arg, t_dongle *dongle, char *policy)
 	{
 		dongle[i].id = i + 1;
 		dongle[i].is_used = 0;
+		dongle[i].index = 0;
+		dongle[i].capacity = 2;
 		dongle[i].cool_down = arg[6];
 		dongle[i].policy = policy;
 		dongle[i].ready_coder[0] = NULL;

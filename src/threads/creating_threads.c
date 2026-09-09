@@ -21,10 +21,8 @@ static void	*routine(void *args)
 	i = 0;
 	while (i < coder->nub_of_compiles)
 	{
-		coder->start = convert_to_milisecond();
 		if (request_dongles(coder))
 			return (NULL);
-		coder->last_compile = convert_to_milisecond();
 		if (compiling(coder))
 		{
 			release_dongles(coder);

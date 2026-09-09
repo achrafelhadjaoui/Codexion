@@ -104,6 +104,8 @@ static int	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 		coder[i].time_to_debug = arg[3];
 		coder[i].time_to_refac = arg[4];
 		coder[i].nub_of_compiles = arg[5];
+		coder[i].left_free_last = 1;
+		coder[i].right_free_last = 1;
 		coder[i].last_compile = simulation->start_time;
 		coder[i].monitor = monitor;
 		/*

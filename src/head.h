@@ -60,6 +60,8 @@ typedef struct s_coder
 	int							time_to_debug;
 	int							time_to_refac;
 	int							nub_of_compiles;
+	int							left_free_last;
+	int							right_free_last;
 	long						start;
 	long						last_compile;
 	int							time_until_burnout;

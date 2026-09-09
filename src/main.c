@@ -19,7 +19,7 @@ static int	ft_atoi(char *nb)
 
 	res = 0;
 	i = 0;
-	if (nb[i] == '-')
+	if (nb[i] == '-' || nb[i] == '\0')
 		return (-1);
 	while (nb[i])
 	{
@@ -60,6 +60,8 @@ static int	checking_type(int *arg, char *av[], char **policy)
 		arg[i] = res;
 		i++;
 	}
+	if (arg[0] < 1)
+		return (0);
 	*policy = av[8];
 	to_lower(*policy);
 	if (strcmp(*policy, "fifo") != 0 && strcmp(*policy, "edf") != 0)

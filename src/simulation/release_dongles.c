@@ -23,15 +23,12 @@ static void	release_one_dongle(t_dongle *dongle)
 	dongle->cooldown_until = convert_to_milisecond() + dongle->cool_down;
 
 	/*
-		* Wake the next coder.
+		* Wake every coder queued on THIS dongle.
 		*
-		* It will notice that the dongle is in cooldown
-		* and use pthread_cond_timedwait().
+		* They re-test the predicate: whoever is at the head of
+		* ready_coder[] takes it once the cooldown has elapsed.
 		*/
-	if (dongle->ready_coder[0])
-	{
-		pthread_cond_signal(&dongle->ready_coder[0]->coder_cond);
-	}
+	pthread_cond_broadcast(&dongle->dongle_cond);
 	pthread_mutex_unlock(&dongle->dongle_mutex);
 }
 

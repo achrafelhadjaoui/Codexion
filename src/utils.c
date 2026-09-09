@@ -37,6 +37,13 @@ void	get_abstime(struct timespec *abstime, long milliseconds)
 	}
 }
 
+/*
+	* The stop flag and the log line are written inside the SAME
+	* monitor_mutex critical section.
+	*
+	* Every other log goes through log_state(), which also takes
+	* monitor_mutex, so nothing can be printed after "burned out".
+	*/
 int	checking_burnout(t_coder *coder)
 {
 	long	current_time;
@@ -48,15 +55,32 @@ int	checking_burnout(t_coder *coder)
 	if ((time_since_compile >= coder->time_to_burnout)
 		&& coder->monitor->burnout_detected != 1)
 	{
+		coder->monitor->burnout_detected = 1;
 		pthread_mutex_lock(&coder->simulation->logging_mutex);
 		printf("%ld %d burned out\n", convert_to_milisecond()
 			- coder->simulation->start_time, coder->id);
 		pthread_mutex_unlock(&coder->simulation->logging_mutex);
+		pthread_cond_signal(&coder->monitor->monitor_cond);
 		pthread_mutex_unlock(&coder->monitor->monitor_mutex);
 		return (1);
 	}
 	pthread_mutex_unlock(&coder->monitor->monitor_mutex);
 	return (0);
+}
+
+void	log_state(t_coder *coder, char *msg)
+{
+	long	timestamp;
+
+	pthread_mutex_lock(&coder->monitor->monitor_mutex);
+	if (coder->monitor->burnout_detected != 1)
+	{
+		timestamp = convert_to_milisecond() - coder->simulation->start_time;
+		pthread_mutex_lock(&coder->simulation->logging_mutex);
+		printf("%ld %d %s\n", timestamp, coder->id, msg);
+		pthread_mutex_unlock(&coder->simulation->logging_mutex);
+	}
+	pthread_mutex_unlock(&coder->monitor->monitor_mutex);
 }
 
 // void	wake_all_coders(t_coder *coder)
@@ -74,6 +98,14 @@ int	checking_burnout(t_coder *coder)
 // }
 
 
+/*
+	* Coder i owns dongle i as its right dongle, so walking the coders
+	* visits every dongle exactly once.
+	*
+	* Broadcasting while holding the dongle mutex is what makes the
+	* wake-up impossible to miss: a waiter can only be inside
+	* pthread_cond_timedwait() or holding that same mutex.
+	*/
 void	wake_all_coders(t_coder *coder)
 {
 	int			i;
@@ -84,16 +116,10 @@ void	wake_all_coders(t_coder *coder)
 	i = 0;
 	while (i < size)
 	{
-		pthread_mutex_lock(&coder[i].waiting_mutex);
-		dongle = coder[i].waiting_dongle;
-		pthread_mutex_unlock(&coder[i].waiting_mutex);
-
-		if (dongle != NULL)
-		{
-			pthread_mutex_lock(&dongle->dongle_mutex);
-			pthread_cond_signal(&coder[i].coder_cond);
-			pthread_mutex_unlock(&dongle->dongle_mutex);
-		}
+		dongle = coder[i].right;
+		pthread_mutex_lock(&dongle->dongle_mutex);
+		pthread_cond_broadcast(&dongle->dongle_cond);
+		pthread_mutex_unlock(&dongle->dongle_mutex);
 		i++;
 	}
 }

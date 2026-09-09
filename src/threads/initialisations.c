@@ -26,18 +26,7 @@ static void destroying_initilized_dongles(t_dongle *dongle, int size)
 	while (i < size)
 	{
 		pthread_mutex_destroy(&dongle[i].dongle_mutex);
-		i++;
-	}
-}
-
-static void destroying_initilized_coders(t_coder *coder, int size)
-{
-	int	i;
-
-	i = 0;
-	while (i < size)
-	{
-		pthread_cond_destroy(&coder[i].coder_cond);
+		pthread_cond_destroy(&dongle[i].dongle_cond);
 		i++;
 	}
 }
@@ -60,7 +49,6 @@ static void destroy_and_free(t_coder *coder, t_dongle *dongle, t_sim_and_mon *si
 	pthread_mutex_destroy(&sim->logging_mutex);
 	destroying_initilized_dongles(dongle, size);
 	destroying_initilaized_monitor(monitor);
-	destroying_initilized_coders(coder, size);
 	free_mem(coder, dongle);
 }
 
@@ -80,6 +68,12 @@ static int	dongle_initialisation(int *arg, t_dongle *dongle, char *policy)
 		dongle[i].used_by = NULL;
 		if (pthread_mutex_init(&dongle[i].dongle_mutex, NULL) != 0)
 		{
+			destroying_initilized_dongles(dongle, i);
+			return (1);
+		}
+		if (pthread_cond_init(&dongle[i].dongle_cond, NULL) != 0)
+		{
+			pthread_mutex_destroy(&dongle[i].dongle_mutex);
 			destroying_initilized_dongles(dongle, i);
 			return (1);
 		}
@@ -112,21 +106,13 @@ static int	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 		coder[i].nub_of_compiles = arg[5];
 		coder[i].last_compile = simulation->start_time;
 		coder[i].monitor = monitor;
-		coder[i].waiting_dongle = NULL;
 		/*
 			* All coders point to the SAME simulation.
+			*
+			* Coders own no synchronisation primitive of their own:
+			* they always wait on the cond of the dongle they want.
 			*/
 		coder[i].simulation = simulation;
-		if (pthread_cond_init(&coder[i].coder_cond, NULL) != 0)
-		{
-			destroying_initilized_coders(coder, i);
-			return 1;
-		}
-		if (pthread_mutex_init(&coder[i].waiting_mutex, NULL) != 0)
-		{
-			destroying_initilized_coders(coder, i);
-			return (1);
-		}
 		i++;
 	}
 	return 0;

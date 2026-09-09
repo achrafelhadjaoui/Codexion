@@ -46,6 +46,7 @@ typedef struct s_dongle
 	char						*policy;
 	long						cooldown_until;
 	pthread_mutex_t				dongle_mutex;
+	pthread_cond_t				dongle_cond;
 	t_coder						*used_by;
 	t_coder						*ready_coder[2];
 }								t_dongle;
@@ -66,10 +67,7 @@ typedef struct s_coder
 	t_monitor					*monitor;
 	t_dongle					*left;
 	t_dongle					*right;
-	t_dongle					*waiting_dongle;
 	pthread_t					thread;
-	pthread_mutex_t				waiting_mutex;
-	pthread_cond_t				coder_cond;
 }								t_coder;
 
 typedef struct s_monitor
@@ -103,6 +101,7 @@ void							get_abstime(struct timespec *abstime,
 									long milliseconds);
 int								compiling(t_coder *coder);
 int								checking_burnout(t_coder *coder);
+void							log_state(t_coder *coder, char *msg);
 void							wake_all_coders(t_coder *coder);
 void							stop_threads(t_monitor *monitor);
 int								simulation_stopped(t_coder *coder);

@@ -216,10 +216,9 @@ int	debuging(t_coder *coder)
 	current_time = convert_to_milisecond();
 	debug_end = current_time + coder->time_to_debug;
 	burnout_deadline = coder->last_compile + coder->time_to_burnout;
-	pthread_mutex_lock(&coder->simulation->logging_mutex);
-	printf("%ld %d is debugging\n", convert_to_milisecond()
-		- coder->simulation->start_time, coder->id);
-	pthread_mutex_unlock(&coder->simulation->logging_mutex);
+	if (simulation_stopped(coder))
+		return (1);
+	log_state(coder, "is debugging");
 	if (debug_end < burnout_deadline)
 		return (wait_for_activity(coder, coder->time_to_debug));
 	remaining = burnout_deadline - current_time;
@@ -237,10 +236,9 @@ int	refactoring(t_coder *coder)
 	current_time = convert_to_milisecond();
 	refac_end = current_time + coder->time_to_refac;
 	burnout_deadline = coder->last_compile + coder->time_to_burnout;
-	pthread_mutex_lock(&coder->simulation->logging_mutex);
-	printf("%ld %d is refactoring\n", convert_to_milisecond()
-		- coder->simulation->start_time, coder->id);
-	pthread_mutex_unlock(&coder->simulation->logging_mutex);
+	if (simulation_stopped(coder))
+		return (1);
+	log_state(coder, "is refactoring");
 	if (refac_end < burnout_deadline)
 		return (wait_for_activity(coder, coder->time_to_refac));
 	remaining = burnout_deadline - current_time;
@@ -258,10 +256,9 @@ int	compiling(t_coder *coder)
 	current_time = convert_to_milisecond();
 	compile_end = current_time + coder->time_to_compile;
 	burnout_deadline = coder->last_compile + coder->time_to_burnout;
-	pthread_mutex_lock(&coder->simulation->logging_mutex);
-	printf("%ld %d is compiling\n", convert_to_milisecond()
-		- coder->simulation->start_time, coder->id);
-	pthread_mutex_unlock(&coder->simulation->logging_mutex);
+	if (simulation_stopped(coder))
+		return (1);
+	log_state(coder, "is compiling");
 	if (compile_end < burnout_deadline)
 		return (wait_for_activity(coder, coder->time_to_compile));
 	remaining = burnout_deadline - current_time;

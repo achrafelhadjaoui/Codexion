@@ -13,7 +13,8 @@
 CC       := cc
 CFLAGS   := -Wall -Wextra -Werror -pthread
 
-TARGET   := codexion
+NAME     := codexion
+TARGET   := $(NAME)
 SRCS     := src/main.c src/threads/creating_threads.c src/threads/initialisations.c src/helper.c \
 			src/utils.c src/simulation/edf_handling.c src/simulation/fifo_handling.c \
 			src/simulation/ordering_schedul.c src/simulation/release_dongles.c src/simulation/compile_debug_refactor.c
@@ -27,12 +28,22 @@ SRCS     := src/main.c src/threads/creating_threads.c src/threads/initialisation
 #     src/simulation/fifo_handling.c
 #     src/simulation/ordering_schedul.c
 
-.PHONY: all clean
+OBJS     := $(SRCS:.c=.o)
 
-all: $(TARGET)
+.PHONY: all clean fclean re
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@
+
+%.o: %.c src/head.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(TARGET)
+	rm -f $(OBJS)
 
-$(TARGET): $(SRCS)
-	$(CC) $(CFLAGS) $^ -o $@
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all

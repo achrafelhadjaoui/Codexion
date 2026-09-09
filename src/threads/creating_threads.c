@@ -60,25 +60,16 @@ static void	*monitor_routine(void *arg)
 
 	monitor = (t_monitor *)arg;
 	pthread_mutex_lock(&monitor->monitor_mutex);
-	while (monitor->burnout_detected != 1 || monitor->finish_running != 0)
-	{
+	/*
+		* Predicate loop: keep waiting only while nobody burned out AND
+		* some coder is still running.
+		*
+		* Re-testing the predicate before waiting is what makes a signal
+		* sent before this thread got scheduled harmless.
+		*/
+	while (monitor->burnout_detected != 1 && monitor->finish_running != 0)
 		pthread_cond_wait(&monitor->monitor_cond, &monitor->monitor_mutex);
-		if (monitor->burnout_detected == 1)
-			break ;
-		if (monitor->finish_running == 0)
-		{
-			pthread_mutex_unlock(&monitor->monitor_mutex);
-			return (NULL);
-		}
-	}
-	// if (monitor->finish_running == 0)
-	// {
-	//     pthread_mutex_unlock(&monitor->monitor_mutex);
-	//      return (NULL);
-	// }
-	//pthread_cond_broadcast(&monitor->activity_cond);
 	pthread_mutex_unlock(&monitor->monitor_mutex);
-	// also signal all the coders being waiting for dongle cooldown
 	wake_all_coders(monitor->coders);
 	return (NULL);
 }

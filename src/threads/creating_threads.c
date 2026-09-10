@@ -39,19 +39,6 @@ static void	*routine(void *args)
 	return (NULL);
 }
 
-static void	*monitor_routine(void *arg)
-{
-	t_monitor	*monitor;
-
-	monitor = (t_monitor *)arg;
-	pthread_mutex_lock(&monitor->monitor_mutex);
-	while (monitor->burnout_detected != 1 && monitor->finish_running != 0)
-		pthread_cond_wait(&monitor->monitor_cond, &monitor->monitor_mutex);
-	pthread_mutex_unlock(&monitor->monitor_mutex);
-	wake_all_coders(monitor->coders);
-	return (NULL);
-}
-
 static int	create_threads(t_coder *coder, t_monitor *monitor, int size)
 {
 	int	i;

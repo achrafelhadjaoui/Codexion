@@ -16,17 +16,8 @@ void	stop_threads(t_monitor *monitor)
 {
 	pthread_mutex_lock(&monitor->monitor_mutex);
 	monitor->burnout_detected = 1;
-	pthread_cond_signal(&monitor->monitor_cond);
 	pthread_mutex_unlock(&monitor->monitor_mutex);
 	wake_all_coders(monitor->coders);
-}
-
-void	mention_to_stop_threads(t_monitor *monitor)
-{
-	pthread_mutex_lock(&monitor->monitor_mutex);
-	monitor->burnout_detected = 1;
-	pthread_cond_signal(&monitor->monitor_cond);
-	pthread_mutex_unlock(&monitor->monitor_mutex);
 }
 
 int	simulation_stopped(t_coder *coder)
@@ -40,12 +31,27 @@ int	simulation_stopped(t_coder *coder)
 }
 
 /*
-	* Coder i owns dongle i as its right dongle, so walking the coders
-	* visits every dongle exactly once.
+	* Dongle i is shared by the coder holding it as its right dongle and
+	* by the coder holding it as its left one. Each of them waits on the
+	* cond of its OWN right dongle, so telling the second one that this
+	* dongle moved means broadcasting on the next dongle's cond.
 	*
-	* Broadcasting while holding the dongle mutex is what makes the
-	* wake-up impossible to miss: a waiter can only be inside
-	* pthread_cond_timedwait() or holding that same mutex.
+	* Taking that mutex before broadcasting is what makes the wake-up
+	* impossible to miss: a coder about to wait still holds it, so the
+	* broadcast can only land once that coder is really inside the wait.
+	*/
+void	notify_sibling(t_dongle *dongle)
+{
+	if (dongle->sibling == dongle)
+		return ;
+	pthread_mutex_lock(&dongle->sibling->dongle_mutex);
+	pthread_cond_broadcast(&dongle->sibling->dongle_cond);
+	pthread_mutex_unlock(&dongle->sibling->dongle_mutex);
+}
+
+/*
+	* Coder i owns dongle i as its right dongle, so walking the coders
+	* visits every cond a coder can be blocked on exactly once.
 	*/
 void	wake_all_coders(t_coder *coder)
 {

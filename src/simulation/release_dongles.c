@@ -12,13 +12,24 @@
 
 #include "../head.h"
 
+/*
+	* Releasing starts the cooldown, so the dongle goes to state 2 rather
+	* than straight back to free.
+	*
+	* Both broadcasts matter: a dongle is shared by two coders, and those
+	* two wait on two different condition variables, so waking only this
+	* dongle's own cond would leave the neighbour asleep on a dongle
+	* nobody is using.
+	*/
 static void	release_one_dongle(t_dongle *dongle)
 {
 	pthread_mutex_lock(&dongle->dongle_mutex);
 	dongle->is_used = 2;
+	dongle->used_by = NULL;
 	dongle->cooldown_until = convert_to_milisecond() + dongle->cool_down;
 	pthread_cond_broadcast(&dongle->dongle_cond);
 	pthread_mutex_unlock(&dongle->dongle_mutex);
+	notify_sibling(dongle);
 }
 
 void	release_dongles(t_coder *coder)

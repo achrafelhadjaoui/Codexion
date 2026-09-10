@@ -34,8 +34,6 @@ void	destroying_initilized_dongles(t_dongle *dongle, int size)
 void	destroying_initilaized_monitor(t_monitor *monitor)
 {
 	pthread_mutex_destroy(&monitor->monitor_mutex);
-	pthread_cond_destroy(&monitor->monitor_cond);
-	pthread_cond_destroy(&monitor->activity_cond);
 }
 
 void	destroy_and_free(t_coder *coder, t_dongle *dongle,

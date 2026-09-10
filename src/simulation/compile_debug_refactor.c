@@ -12,62 +12,31 @@
 
 #include "../head.h"
 
+/*
+	* A phase no longer cuts itself short when the burnout deadline falls
+	* inside it. The coder just does its work for the full duration; the
+	* monitor is the one watching the deadline and it reports the burnout
+	* the millisecond it passes, whatever the coder happens to be doing.
+	*/
 int	debuging(t_coder *coder)
 {
-	long	current_time;
-	long	debug_end;
-	long	burnout_deadline;
-	long	remaining;
-
-	current_time = convert_to_milisecond();
-	debug_end = current_time + coder->time_to_debug;
-	burnout_deadline = coder->last_compile + coder->time_to_burnout;
 	if (simulation_stopped(coder))
 		return (1);
 	log_state(coder, "is debugging");
-	if (debug_end < burnout_deadline)
-		return (wait_for_activity(coder, coder->time_to_debug));
-	remaining = burnout_deadline - current_time;
-	handle_burnout(remaining, coder);
-	return (1);
+	return (wait_for_activity(coder, coder->time_to_debug));
 }
 
 int	refactoring(t_coder *coder)
 {
-	long	current_time;
-	long	refac_end;
-	long	burnout_deadline;
-	long	remaining;
-
-	current_time = convert_to_milisecond();
-	refac_end = current_time + coder->time_to_refac;
-	burnout_deadline = coder->last_compile + coder->time_to_burnout;
 	if (simulation_stopped(coder))
 		return (1);
 	log_state(coder, "is refactoring");
-	if (refac_end < burnout_deadline)
-		return (wait_for_activity(coder, coder->time_to_refac));
-	remaining = burnout_deadline - current_time;
-	handle_burnout(remaining, coder);
-	return (1);
+	return (wait_for_activity(coder, coder->time_to_refac));
 }
 
 int	compiling(t_coder *coder)
 {
-	long	current_time;
-	long	compile_end;
-	long	burnout_deadline;
-	long	remaining;
-
-	current_time = convert_to_milisecond();
-	compile_end = current_time + coder->time_to_compile;
-	burnout_deadline = coder->last_compile + coder->time_to_burnout;
 	if (simulation_stopped(coder))
 		return (1);
-	log_state(coder, "is compiling");
-	if (compile_end < burnout_deadline)
-		return (wait_for_activity(coder, coder->time_to_compile));
-	remaining = burnout_deadline - current_time;
-	handle_burnout(remaining, coder);
-	return (1);
+	return (wait_for_activity(coder, coder->time_to_compile));
 }

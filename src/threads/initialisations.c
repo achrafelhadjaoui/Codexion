@@ -21,13 +21,13 @@ static void	dongle_initialisation(int *arg, t_dongle *dongle, char *policy)
 	{
 		dongle[i].id = i + 1;
 		dongle[i].is_used = 0;
-		dongle[i].index = 0;
-		dongle[i].capacity = 2;
 		dongle[i].cool_down = arg[6];
 		dongle[i].policy = policy;
 		dongle[i].ready_coder[0] = NULL;
 		dongle[i].ready_coder[1] = NULL;
 		dongle[i].used_by = NULL;
+		dongle[i].cooldown_until = 0;
+		dongle[i].sibling = &dongle[(i + 1) % arg[0]];
 		pthread_mutex_init(&dongle[i].dongle_mutex, NULL);
 		pthread_cond_init(&dongle[i].dongle_cond, NULL);
 		i++;
@@ -55,8 +55,8 @@ static void	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 		coder[i].time_to_debug = arg[3];
 		coder[i].time_to_refac = arg[4];
 		coder[i].nub_of_compiles = arg[5];
-		coder[i].left_free_last = 1;
-		coder[i].right_free_last = 1;
+		coder[i].start = simulation->start_time;
+		coder[i].first_request = 1;
 		coder[i].last_compile = simulation->start_time;
 		coder[i].monitor = monitor;
 		coder[i].simulation = simulation;
@@ -71,8 +71,6 @@ static void	monitor_initialisation(t_monitor *monitor, t_coder *coder,
 	monitor->finish_running = num_of_running;
 	monitor->coders = coder;
 	pthread_mutex_init(&monitor->monitor_mutex, NULL);
-	pthread_cond_init(&monitor->monitor_cond, NULL);
-	pthread_cond_init(&monitor->activity_cond, NULL);
 }
 
 void	initialisation_and_creating_threads(int *arg, char *policy)

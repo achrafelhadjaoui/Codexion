@@ -2,6 +2,7 @@
 /*                                                                            */
 /*                                                        :::      ::::::::   */
 /*   threads_helper.c                                   :+:      :+:    :+:   */
+/*                                                    +:+      :+:    :+:     */
 /*                                                    +:+ +:+         +:+     */
 /*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,10 +13,15 @@
 
 #include "../head.h"
 
+/*
+	* No signal to send here: the monitor is watching the clock anyway, so
+	* it reads this counter on its next pass rather than being woken for
+	* it. A condition variable nobody is ever blocked on would only look
+	* like synchronisation.
+	*/
 void	coder_finished(t_coder *coder)
 {
 	pthread_mutex_lock(&coder->monitor->monitor_mutex);
 	coder->monitor->finish_running -= 1;
-	pthread_cond_signal(&coder->monitor->monitor_cond);
 	pthread_mutex_unlock(&coder->monitor->monitor_mutex);
 }

@@ -6,7 +6,7 @@
 /*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/06 03:41:30 by aelhadja          #+#    #+#             */
-/*   Updated: 2026/09/06 04:40:21 by aelhadja         ###   ########.fr       */
+/*   Updated: 2026/09/10 06:41:11 by aelhadja         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,6 @@ typedef struct s_sim_and_mon
 	t_simulation				*sim;
 	t_monitor					*mon;
 }								t_sim_and_mon;
-
-
-
 
 typedef struct s_dongle
 {

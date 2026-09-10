@@ -20,14 +20,6 @@ SRCS     := src/main.c src/threads/creating_threads.c src/threads/initialisation
 			src/simulation/ordering_schedul.c src/simulation/release_dongles.c src/simulation/compile_debug_refactor.c \
 			src/simulation/activity_helper.c src/simulation/scheduel_ordering_helper.c
 
-# SRCS :=
-#     src/main.c
-#     src/threads/creating_threads.c
-#     src/threads/initilisation.c
-#     src/threads/utils.c
-#     src/simulation/edf_handling.c
-#     src/simulation/fifo_handling.c
-#     src/simulation/ordering_schedul.c
 
 OBJS     := $(SRCS:.c=.o)
 

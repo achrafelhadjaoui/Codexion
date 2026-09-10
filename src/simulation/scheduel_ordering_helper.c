@@ -6,7 +6,7 @@
 /*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/09 21:08:59 by aelhadja          #+#    #+#             */
-/*   Updated: 2026/09/09 21:09:03 by aelhadja         ###   ########.fr       */
+/*   Updated: 2026/09/10 06:43:11 by aelhadja         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ void	coder_to_wating_queue(t_coder *coder, t_dongle *dongle)
 		edf_implementation(dongle, coder);
 	}
 }
-
 
 void	lock_two_dongles(t_dongle *left, t_dongle *right)
 {
@@ -44,7 +43,6 @@ void	unlock_two_dongles(t_dongle *left, t_dongle *right)
 	pthread_mutex_unlock(&left->dongle_mutex);
 	pthread_mutex_unlock(&right->dongle_mutex);
 }
-
 
 int	head_is_blocked(t_dongle *dongle, t_coder *coder)
 {

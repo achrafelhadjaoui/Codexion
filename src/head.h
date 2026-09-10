@@ -93,9 +93,7 @@ void							coder_and_monitor_thread_creation(
 long							convert_to_milisecond(void);
 long							convert_to_microsecond(int nb);
 int								request_dongles(t_coder *coder);
-void							fifo_implementation(t_dongle *dongle,
-									t_coder *coder);
-void							edf_implementation(t_dongle *dongle,
+void							logic_implementation(t_dongle *dongle,
 									t_coder *coder);
 void							release_dongles(t_coder *coder);
 int								debuging(t_coder *coder);

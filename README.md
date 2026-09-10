@@ -1,15 +1,16 @@
-*This project has been created as part of the 42 curriculum by [aelhadja](https://github.com/achrafelhadjaoui/codexion).*
+*This project has been created as part of the 42 curriculum by aelhadja.*
 
 ## Description
 Codexion is a concurrency project simulating developers competing for limited shared resources (USB dongles) in order to compile, debug, and refactor code.
 The goal is to manage thread synchronization, prevent deadlocks, handle resource cooldowns, avoid starvation, and detect burnout conditions precisely using custom heap scheduling algorithms (FIFO/EDF).
 
-## Compilation
+## Instruction
 Compile the program using the provided `Makefile`:
 make
 
 ## Resources
-* AI Usage: explanations for concurrency concepts.
+* blogs : explaining the concept of cpu and core with single thread and multi threading and how thread can share resources and also which resources
+* AI Usage: explanations for concurrency concepts and parallelism.
 
 ## Blocking Cases Handled
 * Deadlocks: Controlled resource locking order to avoid circular wait issues.

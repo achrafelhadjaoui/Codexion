@@ -14,14 +14,7 @@
 
 void	coder_to_wating_queue(t_coder *coder, t_dongle *dongle)
 {
-	if (strcmp(dongle->policy, "fifo") == 0)
-	{
-		fifo_implementation(dongle, coder);
-	}
-	else
-	{
-		edf_implementation(dongle, coder);
-	}
+	logic_implementation(dongle, coder);
 }
 
 void	lock_two_dongles(t_dongle *left, t_dongle *right)

@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   fifo_handling.c                                    :+:      :+:    :+:   */
+/*   logic_handling.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: aelhadja <aelhadja@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -60,7 +60,7 @@ static void	heapify_up(t_coder **heap, int index, t_dongle *dongle)
 	}
 }
 
-void	fifo_implementation(t_dongle *dongle, t_coder *add_coder)
+void	logic_implementation(t_dongle *dongle, t_coder *add_coder)
 {
 	int	size;
 

@@ -21,17 +21,42 @@
 	* simulation stopping instead of finishing its whole phase first.
 	* Watching for the burnout itself is not this coder's job any more;
 	* the monitor does that.
+	*
+	* The last millisecond is polled finer. A phase that overshoots by
+	* most of a slice hands the dongles back late, the coders waiting for
+	* them start late, and the whole ring keeps that lateness for the rest
+	* of the run - every coder pays it again on every single wave. Costing
+	* a handful of extra wake-ups once per phase to hand the dongles over
+	* on time instead is a trade worth making.
+	*
+	* The stop flag is only read every tenth slice, because reading it
+	* takes the one mutex every coder shares. Once per millisecond per
+	* coder, that was hundreds of locks on a single mutex for every phase
+	* and all of the coders queueing on it at once - work that grew with
+	* the number of coders and bought nothing, since the flag is checked
+	* again under a lock before anything is ever printed. Answering a stop
+	* up to ten milliseconds later costs only a slightly later exit.
 	*/
 int	wait_for_activity(t_coder *coder, int duration)
 {
 	long	end_time;
+	long	remaining;
+	int		tick;
 
 	end_time = convert_to_milisecond() + duration;
-	while (convert_to_milisecond() < end_time)
+	tick = 0;
+	while (1)
 	{
-		if (simulation_stopped(coder))
+		if (tick % 10 == 0 && simulation_stopped(coder))
 			return (1);
-		usleep(1000);
+		tick++;
+		remaining = end_time - convert_to_milisecond();
+		if (remaining <= 0)
+			break ;
+		if (remaining > 1)
+			usleep(1000);
+		else
+			usleep(100);
 	}
 	return (simulation_stopped(coder));
 }

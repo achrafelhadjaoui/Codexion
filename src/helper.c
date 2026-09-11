@@ -12,8 +12,20 @@
 
 #include "head.h"
 
+/*
+	* Closes the log as well as raising the stop flag. The log used to
+	* read burnout_detected directly, so shutting the simulation down
+	* silenced it in one go; now that the two flags are separate, both
+	* have to be set to keep that behaviour.
+	*/
 void	stop_threads(t_monitor *monitor)
 {
+	t_simulation	*sim;
+
+	sim = monitor->coders[0].simulation;
+	pthread_mutex_lock(&sim->logging_mutex);
+	sim->stop_logging = 1;
+	pthread_mutex_unlock(&sim->logging_mutex);
 	pthread_mutex_lock(&monitor->monitor_mutex);
 	monitor->burnout_detected = 1;
 	pthread_mutex_unlock(&monitor->monitor_mutex);

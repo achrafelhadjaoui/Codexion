@@ -64,6 +64,40 @@ static void	coder_initialisation(int *arg, t_dongle *dongle, t_coder *coder,
 	}
 }
 
+/*
+	* Every coder is put in the queue of both of its dongles here, before
+	* a single thread exists.
+	*
+	* Queueing from inside the thread instead made the first wave a race:
+	* the first thread to run found both of its queues empty, was head of
+	* them by default and took the pair, whatever fifo or edf had to say.
+	* The order the coders really start in was pthread_create()'s, so the
+	* ring opened with a lopsided set of coders compiling - three out of
+	* eight where four fit - and never recovered its rhythm.
+	*
+	* They all become ready at the same instant anyway, so filling the
+	* queues here is also the honest description of that instant, and the
+	* policy gets to arbitrate a start where every request is present.
+	*
+	* This is the last thing touched before the threads exist, so the two
+	* flags that have to start clear - the log being open, and each
+	* coder's "done with all my compiles" - are cleared here too.
+	*/
+void	prefill_waiting_queues(t_coder *coder, int size)
+{
+	int	i;
+
+	coder->simulation->stop_logging = 0;
+	i = 0;
+	while (i < size)
+	{
+		coder[i].finished = 0;
+		coder_to_wating_queue(&coder[i], coder[i].left);
+		coder_to_wating_queue(&coder[i], coder[i].right);
+		i++;
+	}
+}
+
 static void	monitor_initialisation(t_monitor *monitor, t_coder *coder,
 		int num_of_running)
 {
@@ -97,6 +131,7 @@ void	initialisation_and_creating_threads(int *arg, char *policy)
 	dongle_initialisation(arg, dongle, policy);
 	monitor_initialisation(&monitor, coder, arg[0]);
 	coder_initialisation(arg, dongle, coder, &sim_mon);
+	prefill_waiting_queues(coder, arg[0]);
 	coder_and_monitor_thread_creation(coder, arg[0], &monitor);
 	destroy_and_free(coder, dongle, &sim_mon, arg[0]);
 }

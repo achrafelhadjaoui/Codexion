@@ -20,18 +20,50 @@ long	convert_to_milisecond(void)
 	return (((long)tv.tv_sec * 1000L) + ((long)tv.tv_usec / 1000L));
 }
 
+/*
+	* Only the logging mutex is taken here, and stop_logging lives under
+	* it. Reading the burnout flag under the monitor mutex instead meant
+	* every state change grabbed two locks, one of them the single mutex
+	* the whole simulation shares, while still holding both dongles. The
+	* coders woken together by a released pair all piled onto it at the
+	* one moment they are trying to start compiling.
+	*
+	* One lock guards the decision and the line it prints together, which
+	* is all the ordering the output ever needed.
+	*/
 void	log_state(t_coder *coder, char *msg)
 {
-	long	timestamp;
+	t_simulation	*sim;
 
-	pthread_mutex_lock(&coder->monitor->monitor_mutex);
-	if (coder->monitor->burnout_detected != 1)
+	sim = coder->simulation;
+	pthread_mutex_lock(&sim->logging_mutex);
+	if (!sim->stop_logging)
+		printf("%ld %d %s\n", convert_to_milisecond() - sim->start_time,
+			coder->id, msg);
+	pthread_mutex_unlock(&sim->logging_mutex);
+}
+
+/*
+	* Setting stop_logging and printing the line under the one lock is
+	* what makes "burned out" the last line: a coder already inside the
+	* lock got there first, and every coder after it finds the flag set
+	* and prints nothing.
+	*/
+void	log_burnout(t_coder *coder)
+{
+	t_simulation	*sim;
+
+	sim = coder->simulation;
+	pthread_mutex_lock(&sim->logging_mutex);
+	if (!sim->stop_logging)
 	{
-		timestamp = convert_to_milisecond() - coder->simulation->start_time;
-		pthread_mutex_lock(&coder->simulation->logging_mutex);
-		printf("%ld %d %s\n", timestamp, coder->id, msg);
-		pthread_mutex_unlock(&coder->simulation->logging_mutex);
+		sim->stop_logging = 1;
+		printf("%ld %d burned out\n",
+			convert_to_milisecond() - sim->start_time, coder->id);
 	}
+	pthread_mutex_unlock(&sim->logging_mutex);
+	pthread_mutex_lock(&coder->monitor->monitor_mutex);
+	coder->monitor->burnout_detected = 1;
 	pthread_mutex_unlock(&coder->monitor->monitor_mutex);
 }
 
@@ -43,17 +75,17 @@ void	log_state(t_coder *coder, char *msg)
 	*/
 void	log_compile_start(t_coder *coder)
 {
-	long	timestamp;
+	long			timestamp;
+	t_simulation	*sim;
 
-	pthread_mutex_lock(&coder->monitor->monitor_mutex);
-	if (coder->monitor->burnout_detected != 1)
+	sim = coder->simulation;
+	pthread_mutex_lock(&sim->logging_mutex);
+	if (!sim->stop_logging)
 	{
-		timestamp = convert_to_milisecond() - coder->simulation->start_time;
-		pthread_mutex_lock(&coder->simulation->logging_mutex);
+		timestamp = convert_to_milisecond() - sim->start_time;
 		printf("%ld %d has taken a dongle\n", timestamp, coder->id);
 		printf("%ld %d has taken a dongle\n", timestamp, coder->id);
 		printf("%ld %d is compiling\n", timestamp, coder->id);
-		pthread_mutex_unlock(&coder->simulation->logging_mutex);
 	}
-	pthread_mutex_unlock(&coder->monitor->monitor_mutex);
+	pthread_mutex_unlock(&sim->logging_mutex);
 }

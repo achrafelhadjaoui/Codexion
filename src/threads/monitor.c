@@ -47,28 +47,21 @@ static void	refresh_one_dongle(t_dongle *dongle)
 	*
 	* The log line is printed inside the same critical section, so the
 	* coder cannot start a compile between the check and the message.
+	*
+	* A coder that already did all of its compiles is skipped: it stopped
+	* asking for dongles on purpose, so the time since its last compile
+	* means nothing any more.
 	*/
 static int	check_one_coder(t_coder *coder)
 {
-	t_monitor	*monitor;
-	int			burned;
+	int	burned;
 
-	monitor = coder->monitor;
 	burned = 0;
 	pthread_mutex_lock(&coder->right->dongle_mutex);
-	if (convert_to_milisecond() - coder->last_compile
+	if (!coder->finished && convert_to_milisecond() - coder->last_compile
 		>= coder->time_to_burnout)
 	{
-		pthread_mutex_lock(&monitor->monitor_mutex);
-		if (monitor->burnout_detected != 1)
-		{
-			monitor->burnout_detected = 1;
-			pthread_mutex_lock(&coder->simulation->logging_mutex);
-			printf("%ld %d burned out\n", convert_to_milisecond()
-				- coder->simulation->start_time, coder->id);
-			pthread_mutex_unlock(&coder->simulation->logging_mutex);
-		}
-		pthread_mutex_unlock(&monitor->monitor_mutex);
+		log_burnout(coder);
 		burned = 1;
 	}
 	pthread_mutex_unlock(&coder->right->dongle_mutex);

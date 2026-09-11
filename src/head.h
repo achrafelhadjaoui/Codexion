@@ -29,6 +29,7 @@ typedef struct s_sim_and_mon	t_sim_and_mon;
 typedef struct s_simulation
 {
 	long						start_time;
+	int							stop_logging;
 	pthread_mutex_t				logging_mutex;
 }								t_simulation;
 
@@ -62,6 +63,7 @@ typedef struct s_coder
 	int							time_to_refac;
 	int							nub_of_compiles;
 	int							first_request;
+	int							finished;
 	long						start;
 	long						last_compile;
 	t_simulation				*simulation;
@@ -95,6 +97,7 @@ int								debuging(t_coder *coder);
 int								refactoring(t_coder *coder);
 int								compiling(t_coder *coder);
 void							log_state(t_coder *coder, char *msg);
+void							log_burnout(t_coder *coder);
 void							log_compile_start(t_coder *coder);
 void							wake_all_coders(t_coder *coder);
 void							notify_sibling(t_dongle *dongle);
@@ -111,6 +114,8 @@ int								dongle_is_free(t_dongle *dongle,
 									t_coder *coder);
 int								wait_alone(t_coder *coder);
 void							coder_finished(t_coder *coder);
+void							prefill_waiting_queues(t_coder *coder,
+									int size);
 void							free_mem(t_coder *coder, t_dongle *dongle);
 void							destroying_initilized_dongles(
 									t_dongle *dongle, int size);

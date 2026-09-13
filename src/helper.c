@@ -12,12 +12,6 @@
 
 #include "head.h"
 
-/*
-	* Closes the log as well as raising the stop flag. The log used to
-	* read burnout_detected directly, so shutting the simulation down
-	* silenced it in one go; now that the two flags are separate, both
-	* have to be set to keep that behaviour.
-	*/
 void	stop_threads(t_monitor *monitor)
 {
 	t_simulation	*sim;
@@ -42,16 +36,6 @@ int	simulation_stopped(t_coder *coder)
 	return (stopped);
 }
 
-/*
-	* Dongle i is shared by the coder holding it as its right dongle and
-	* by the coder holding it as its left one. Each of them waits on the
-	* cond of its OWN right dongle, so telling the second one that this
-	* dongle moved means broadcasting on the next dongle's cond.
-	*
-	* Taking that mutex before broadcasting is what makes the wake-up
-	* impossible to miss: a coder about to wait still holds it, so the
-	* broadcast can only land once that coder is really inside the wait.
-	*/
 void	notify_sibling(t_dongle *dongle)
 {
 	if (dongle->sibling == dongle)
@@ -61,10 +45,6 @@ void	notify_sibling(t_dongle *dongle)
 	pthread_mutex_unlock(&dongle->sibling->dongle_mutex);
 }
 
-/*
-	* Coder i owns dongle i as its right dongle, so walking the coders
-	* visits every cond a coder can be blocked on exactly once.
-	*/
 void	wake_all_coders(t_coder *coder)
 {
 	int			i;

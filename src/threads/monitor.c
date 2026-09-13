@@ -12,14 +12,6 @@
 
 #include "../head.h"
 
-/*
-	* A cooldown running out is the one state change no thread can
-	* announce: nobody causes it, it just happens when time passes.
-	*
-	* The monitor turns it into a real event here. That is what lets every
-	* coder block on a plain pthread_cond_wait() instead of polling, and
-	* what gives dongle_cond an actual waiter to wake up.
-	*/
 static void	refresh_one_dongle(t_dongle *dongle)
 {
 	int	woke;
@@ -38,20 +30,6 @@ static void	refresh_one_dongle(t_dongle *dongle)
 		notify_sibling(dongle);
 }
 
-/*
-	* Only the monitor decides that a coder burned out.
-	*
-	* last_compile is read under that coder's right dongle mutex: a coder
-	* only ever writes it while holding BOTH of its dongle mutexes, so
-	* holding one of the two already excludes the writer.
-	*
-	* The log line is printed inside the same critical section, so the
-	* coder cannot start a compile between the check and the message.
-	*
-	* A coder that already did all of its compiles is skipped: it stopped
-	* asking for dongles on purpose, so the time since its last compile
-	* means nothing any more.
-	*/
 static int	check_one_coder(t_coder *coder)
 {
 	int	burned;

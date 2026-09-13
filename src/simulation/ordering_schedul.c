@@ -20,19 +20,6 @@ static void	take_one_dongle(t_coder *coder, t_dongle *dongle)
 	dongle->ready_coder[1] = NULL;
 }
 
-/*
-	* Take BOTH dongles or neither, and only ever from the head of BOTH
-	* queues. A coder that is not first in line on one of its two dongles
-	* takes nothing at all, even if the dongle in front of it is free.
-	*
-	* That is what makes fifo/edf mean something: a coder never overtakes
-	* the coder the policy put ahead of it, and it never sits on one
-	* dongle while queueing for the other.
-	*
-	* This cannot lock up: the queues are ordered by one strict total
-	* order, so the smallest-key queued coder is by definition the head
-	* of both of its queues and can always move forward.
-	*/
 static int	take_both_if_head(t_coder *coder)
 {
 	int	left_free;
@@ -49,21 +36,6 @@ static int	take_both_if_head(t_coder *coder)
 	return (1);
 }
 
-/*
-	* Queued on BOTH dongles for the whole request, so the policy sees the
-	* coder on every dongle it is competing for.
-	*
-	* start is stamped here and last_compile when the pair is taken, both
-	* under the two dongle mutexes, so the keys a neighbour reads while
-	* ordering its own queue are never written concurrently.
-	*
-	* The very first request keeps the stamp it was born with. Every coder
-	* becomes ready at the same instant, the start of the simulation, so
-	* that is genuinely when its first request arrives; reading the clock
-	* here would record how long pthread_create() happened to take, and
-	* that is enough to drop two coders into different milliseconds and
-	* lose the tie the ring needs to start off in step.
-	*/
 static void	queue_on_both(t_coder *coder)
 {
 	if (!coder->first_request)
@@ -73,15 +45,6 @@ static void	queue_on_both(t_coder *coder)
 	coder_to_wating_queue(coder, coder->right);
 }
 
-/*
-	* Blocks until something actually changes, instead of polling.
-	*
-	* The left mutex is dropped first, but the right one is held without a
-	* gap until pthread_cond_wait() releases it. Every wake-up aimed at
-	* this coder (a dongle released, a cooldown expired, the simulation
-	* stopping) is broadcast while holding that same right mutex, so the
-	* signal can never slip through before the wait starts.
-	*/
 static void	wait_on_dongles(t_coder *coder)
 {
 	pthread_mutex_unlock(&coder->left->dongle_mutex);

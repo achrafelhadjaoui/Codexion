@@ -12,12 +12,6 @@
 
 #include "../head.h"
 
-/*
-	* A phase no longer cuts itself short when the burnout deadline falls
-	* inside it. The coder just does its work for the full duration; the
-	* monitor is the one watching the deadline and it reports the burnout
-	* the millisecond it passes, whatever the coder happens to be doing.
-	*/
 int	debuging(t_coder *coder)
 {
 	if (simulation_stopped(coder))
